@@ -1,0 +1,27 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+/* This file is for your main application CSS */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.logo {
+  /*animation: float 3s ease-in-out infinite;*/
+  animation-name: float;
+  animation-duration: 1s;
+  /*animation-timing-function: ease-in-out;*/
+  animation-iteration-count: infinite;
+  /*animation-delay: 2s;*/
+  /*animation-direction: normal;*/
+  /*animation-fill-mode: none;*/
+  /*animation-play-state: running;*/
+
+}
+
