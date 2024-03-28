@@ -20,11 +20,32 @@ import "phoenix_html"
 // Establish Phoenix Socket and LiveView configuration.
 import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
+import type {ViewHook} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
 
 const csrfToken = document.querySelector("meta[name='csrf-token']")!.getAttribute("content")
+
+const hooks = {
+  PhoneNumber: {
+    mounted() {
+      this.el.addEventListener("input", e => {
+        const match = this.el.value.replace(/\D/g, "").match(/^(\d{3})(\d{3})(\d{4})$/)
+        if(match) {
+          this.el.value = `${match[1]}-${match[2]}-${match[3]}`
+        }
+      })
+    },
+  }
+} satisfies Record<string, Partial<ViewHook>>
+
+declare global {
+  interface Window {
+    liveSocket: LiveSocket
+  }
+}
+
 let liveSocket = new LiveSocket("/live", Socket, {
-  longPollFallbackMs: 2500,
+  hooks,
   params: {_csrf_token: csrfToken}
 })
 
