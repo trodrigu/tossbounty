@@ -36,3 +36,6 @@ npm-debug.log
 /assets/node_modules/
 
 fly.toml
+tossbounty_dev.db
+tossbounty_dev.db-shm
+tossbounty_dev.db-wal
