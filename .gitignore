@@ -35,3 +35,4 @@ solan_pause-*.tar
 npm-debug.log
 /assets/node_modules/
 
+fly.toml
