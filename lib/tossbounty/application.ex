@@ -7,6 +7,8 @@ defmodule Tossbounty.Application do
 
   @impl true
   def start(_type, _args) do
+    Tossbounty.Release.migrate()
+
     children = [
       TossbountyWeb.Telemetry,
       Tossbounty.Repo,

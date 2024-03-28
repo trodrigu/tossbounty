@@ -18,6 +18,14 @@ defmodule TossbountyWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    get "/create-bounty", BountyController, :new
+
+    live "/bounties", BountyLive.Index, :index
+    live "/bounties/new", BountyLive.Index, :new
+    live "/bounties/:id/edit", BountyLive.Index, :edit
+
+    live "/bounties/:id", BountyLive.Show, :show
+    live "/bounties/:id/show/edit", BountyLive.Show, :edit
   end
 
   # Other scopes may use custom stacks.

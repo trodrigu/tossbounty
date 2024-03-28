@@ -1,0 +1,32 @@
+<.header>
+  Bounty <%= @bounty.id %>
+  <:subtitle>This is a bounty record from your database.</:subtitle>
+  <:actions>
+    <.link patch={~p"/bounties/#{@bounty}/show/edit"} phx-click={JS.push_focus()}>
+      <.button>Edit bounty</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+  <:item title="Description"><%= @bounty.description %></:item>
+  <:item title="Org"><%= @bounty.org %></:item>
+  <:item title="Amount"><%= @bounty.amount %></:item>
+  <:item title="Status"><%= @bounty.status %></:item>
+  <:item title="Funding account"><%= @bounty.funding_account %></:item>
+  <:item title="Bump"><%= @bounty.bump %></:item>
+  <:item title="Example program"><%= @bounty.example_program_id %></:item>
+</.list>
+
+<.back navigate={~p"/bounties"}>Back to bounties</.back>
+
+<.modal :if={@live_action == :edit} id="bounty-modal" show on_cancel={JS.patch(~p"/bounties/#{@bounty}")}>
+  <.live_component
+    module={TossbountyWeb.BountyLive.FormComponent}
+    id={@bounty.id}
+    title={@page_title}
+    action={@live_action}
+    bounty={@bounty}
+    patch={~p"/bounties/#{@bounty}"}
+  />
+</.modal>

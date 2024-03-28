@@ -1,0 +1,46 @@
+<.header>
+  Listing Bounties
+  <:actions>
+    <.link patch={~p"/bounties/new"}>
+      <.button>New Bounty</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.table
+  id="bounties"
+  rows={@streams.bounties}
+  row_click={fn {_id, bounty} -> JS.navigate(~p"/bounties/#{bounty}") end}
+>
+  <:col :let={{_id, bounty}} label="Description"><%= bounty.description %></:col>
+  <:col :let={{_id, bounty}} label="Org"><%= bounty.org %></:col>
+  <:col :let={{_id, bounty}} label="Amount"><%= bounty.amount %></:col>
+  <:col :let={{_id, bounty}} label="Status"><%= bounty.status %></:col>
+  <:col :let={{_id, bounty}} label="Funding account"><%= bounty.funding_account %></:col>
+  <:col :let={{_id, bounty}} label="Example program"><%= bounty.example_program_id %></:col>
+  <:action :let={{_id, bounty}}>
+    <div class="sr-only">
+      <.link navigate={~p"/bounties/#{bounty}"}>Show</.link>
+    </div>
+    <.link patch={~p"/bounties/#{bounty}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={{id, bounty}}>
+    <.link
+      phx-click={JS.push("delete", value: %{id: bounty.id}) |> hide("##{id}")}
+      data-confirm="Are you sure?"
+    >
+      Delete
+    </.link>
+  </:action>
+</.table>
+
+<.modal :if={@live_action in [:new, :edit]} id="bounty-modal" show on_cancel={JS.patch(~p"/bounties")}>
+  <.live_component
+    module={TossbountyWeb.BountyLive.FormComponent}
+    id={@bounty.id || :new}
+    title={@page_title}
+    action={@live_action}
+    bounty={@bounty}
+    patch={~p"/bounties"}
+  />
+</.modal>
