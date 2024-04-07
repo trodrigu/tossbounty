@@ -27,14 +27,19 @@ import { SolanaConnect } from "solana-connect";
 import { Adapter } from "@solana/wallet-adapter-base";
 import { SolflareWalletAdapter } from "@solana/wallet-adapter-solflare";
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
+import { AnchorProvider, BN, web3, utils, Program } from "@coral-xyz/anchor";
+import { IDL } from "./tossbounty";
+import { IDL as ExampleIDL } from "./example";
+//import * as splToken from "@solana/spl-token";
 
 const solConnect = new SolanaConnect({
   additionalAdapters: [
     new SolflareWalletAdapter({
       network: WalletAdapterNetwork.Devnet,
     }),
-]})
-//const solConnect = new SolanaConnect();
+  ]
+});
+
 const connection = new Connection(clusterApiUrl("devnet"));
 console.log("connection:", connection)
 
@@ -46,8 +51,54 @@ const hooks = {
       this.el.addEventListener("click", e => {
         console.log("solConnect:", solConnect);
         const wallet: Adapter | null = solConnect.getWallet();
-        console.log("wallet:", wallet);
-        simulate(wallet!, [], []);
+        console.log("wallet:", wallet.publicKey.toBuffer());
+
+        const provider = new AnchorProvider(connection, (wallet as any), {});
+        console.log("provider:", provider);
+
+        //const program = workspace.Tossbounty as Program<Tossbounty>;
+        const program = new Program(IDL, "BYzWEaZXS7Zf4SY6dcqnsjySp9qLEmB9C3WvyigxtpYQ", provider);
+        console.log("program:", program);
+        //console.log("program:", program);
+        //const example = workspace.Example as Program<Example>;
+        const example = new Program(ExampleIDL, "BYzWEaZXS7Zf4SY6dcqnsjySp9qLEmB9C3WvyigxtpYR", provider);
+        const [bountyPda, bump] = web3.PublicKey.findProgramAddressSync([
+          utils.bytes.utf8.encode("bounty"),
+          wallet.publicKey.toBuffer(),
+          example.programId.toBuffer()
+        ], program.programId)
+
+        console.log("bountyPda:", bountyPda);
+
+        const description = "Fix a bug in our app";
+        const org = "coral-xyz";
+        const bountyRewardAmount = new BN(10000);
+
+        // TODO: deal with funding account?
+        //const mintPubkey = await splToken.createMint(
+          //provider.connection,
+          //payer,
+          //provider.wallet.publicKey,
+          //provider.wallet.publicKey,
+          //6,
+        //);
+        //const fundingAccount = await splToken.createAccount(
+          //provider.connection,
+          //payer,
+          //mintPubkey, 
+          //payer.publicKey, 
+        //);
+        // TODO: create associated token funding account offline
+        const fundingAccount = wallet.publicKey;
+
+
+        const ix = program.methods.createBountyExample(description, org, bountyRewardAmount, bump).accounts({
+          bounty: bountyPda,
+          fundingAccount: fundingAccount, 
+          programId: example.programId,
+        });
+
+        ix.rpc();
       });
     }
   },

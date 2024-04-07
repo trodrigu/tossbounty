@@ -44,4 +44,10 @@ defmodule TossbountyWeb.BountyLive.Index do
 
     {:noreply, stream_delete(socket, :bounties, bounty)}
   end
+
+  @impl true
+  def handle_event("wallet_change", %{"wallet" => wallet_public_key}, socket) do
+    IO.inspect(wallet_public_key)
+    {:noreply, socket}
+  end
 end
