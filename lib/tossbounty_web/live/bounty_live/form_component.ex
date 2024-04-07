@@ -10,9 +10,7 @@ defmodule TossbountyWeb.BountyLive.FormComponent do
       <.simple_form
         for={@form}
         id="bounty-form"
-        phx-target={@myself}
-        phx-change="validate"
-        phx-submit="save"
+        onsubmit="event.preventDefault()"
       >
         <.input field={@form[:description]} type="text" label="Description" />
         <.input field={@form[:org]} type="text" label="Org" />
@@ -20,7 +18,7 @@ defmodule TossbountyWeb.BountyLive.FormComponent do
         <.input field={@form[:funding_account]} type="text" label="Funding account" />
         <.input field={@form[:example_program_id]} type="text" label="Example program" />
         <:actions>
-          <.button phx-disable-with="Saving...">Save Bounty</.button>
+          <.button id="save-bounty-button" phx-hook="SimulateTransaction">Save Bounty</.button>
         </:actions>
       </.simple_form>
     </div>
