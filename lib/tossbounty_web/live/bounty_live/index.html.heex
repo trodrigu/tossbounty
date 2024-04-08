@@ -1,9 +1,9 @@
 <.header>
-  Listing Bounties
+  Bounties
   <:actions>
     <.button id="connect-wallet" phx-hook="ConnectWallet">Connect Wallet</.button>
     <.link patch={~p"/bounties/new"}>
-      <.button>New Bounty</.button>
+      <.button id="new-bounty-button" hidden>New Bounty</.button>
     </.link>
   </:actions>
 </.header>
@@ -23,11 +23,11 @@
     <div class="sr-only">
       <.link navigate={~p"/bounties/#{bounty}"}>Show</.link>
     </div>
-    <.link patch={~p"/bounties/#{bounty}/edit"}>Edit</.link>
+    <.link patch={~p"/bounties/#{bounty}/claim"}>Claim</.link>
   </:action>
 </.table>
 
-<.modal :if={@live_action in [:new, :edit]} id="bounty-modal" show on_cancel={JS.patch(~p"/bounties")}>
+<.modal :if={@live_action in [:new, :edit, :claim]} id="bounty-modal" show on_cancel={JS.patch(~p"/bounties")}>
   <.live_component
     module={TossbountyWeb.BountyLive.FormComponent}
     id={@bounty.id || :new}
@@ -35,6 +35,6 @@
     action={@live_action}
     bounty={@bounty}
     patch={~p"/bounties"}
+    current_user={@current_user}
   />
 </.modal>
-<div id="list-bounties" phx-hook="ListBounties" hidden></div>

@@ -2,12 +2,17 @@ defmodule TossbountyWeb.BountyLive.FormComponent do
   use TossbountyWeb, :live_component
 
   alias Tossbounty.Bounties
+  alias Tossbounty.Accounts.UserNotifier
+  alias Tossbounty.Accounts.UserToken
+  alias Tossbounty.Repo
 
   @impl true
   def render(assigns) do
+    IO.inspect(assigns)
     ~H"""
     <div>
       <.simple_form
+        :if={assigns.action == :new}
         for={@form}
         id="bounty-form"
         onsubmit="event.preventDefault()"
@@ -18,6 +23,37 @@ defmodule TossbountyWeb.BountyLive.FormComponent do
         <.input field={@form[:program_id]} type="text" label="Program ID" />
         <:actions>
           <.button id="save-bounty-button" phx-hook="SimulateTransaction">Save Bounty</.button>
+        </:actions>
+      </.simple_form>
+
+      <.simple_form
+        :if={assigns.action == :claim}
+        for={@form}
+        id="bounty-form"
+        for={@form}
+        id="bounty-form"
+        phx-target={@myself}
+        phx-submit="claim"
+      >
+        <.input field={@form[:proof]} type="text" label="Proof" />
+        <.input field={@form[:token_account]} type="text" label="Token Account" />
+        <:actions>
+          <.button phx-disable-with="Saving...">Claim Bounty</.button>
+        </:actions>
+      </.simple_form>
+
+      <.simple_form
+        :if={assigns.action == :release}
+        for={@form}
+        id="bounty-form"
+        onsubmit="event.preventDefault()"
+      >
+        <.input type="checkbox" field={@form[:pause]} value="1" label="Pause" />
+        <.input field={@form[:token_account]} type="text" label="White Hat Token Account" value={assigns.token_account} disabled/>
+        <.input field={@form[:program_id]} type="text" label="Program ID" value={assigns.bounty.program_id} disabled/>
+        <:actions>
+          <.button id="release-bounty-button" phx-hook="ReleaseBounty" disabled>Release Bounty</.button>
+          <.button id="connect-wallet-release" phx-hook="ConnectWalletRelease">Connect Wallet</.button>
         </:actions>
       </.simple_form>
     </div>
@@ -45,7 +81,30 @@ defmodule TossbountyWeb.BountyLive.FormComponent do
   end
 
   def handle_event("save", %{"bounty" => bounty_params}, socket) do
-    save_bounty(socket, socket.assigns.action, bounty_params)
+    save_bounty(socket, socket.assigns.action, Map.put(bounty_params, "email", socket.assigns.current_user.email))
+  end
+
+  def handle_event("claim", %{"bounty" => bounty_params}, socket) do
+    save_bounty(socket, :claim, bounty_params["proof"], bounty_params["token_account"])
+  end
+
+  defp save_bounty(socket, :claim, proof, token_account) do
+    case Bounties.evaluate_bounty_claim(socket.assigns.bounty, proof) do
+      {:ok, bounty} ->
+        {encoded_token, user_token} = UserToken.build_email_token(socket.assigns.current_user, "claim")
+        Repo.insert!(user_token)
+        url = ~p"/bounties/#{encoded_token}/claim/#{token_account}/release/#{bounty.id}"
+        UserNotifier.deliver_bounty_creator_evaluation(bounty, proof, url)
+        notify_parent({:saved, bounty})
+
+        {:noreply,
+         socket
+         |> put_flash(:info, "Bounty claim for evaluation submitted successfully")
+         |> push_patch(to: socket.assigns.patch)}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        {:noreply, assign_form(socket, changeset)}
+    end
   end
 
   defp save_bounty(socket, :edit, bounty_params) do

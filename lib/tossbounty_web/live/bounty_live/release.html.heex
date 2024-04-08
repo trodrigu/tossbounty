@@ -1,0 +1,11 @@
+  <.live_component
+    module={TossbountyWeb.BountyLive.FormComponent}
+    id={@bounty.id || :new}
+    title={@page_title}
+    action={@live_action}
+    bounty={@bounty}
+    patch={~p"/bounties"}
+    current_user={@current_user}
+    token_account={@token_account}
+  />
+

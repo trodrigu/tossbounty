@@ -56,6 +56,26 @@ defmodule Tossbounty.Bounties do
   end
 
   @doc """
+  Evaluates claim for a bounty.
+
+  ## Examples
+
+      iex> evaluate_bounty_claim(%{field: value})
+      {:ok, %Bounty{}}
+
+      iex> evaluate_bounty_claim(%{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def evaluate_bounty_claim(bounty, proof) do
+    bounty
+    |> Ecto.Changeset.change()
+    |> Bounty.evaluate_claim_changeset(proof)
+    |> Repo.update()
+  end
+
+
+  @doc """
   Updates a bounty.
 
   ## Examples

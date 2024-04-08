@@ -1,6 +1,6 @@
 <.flash_group flash={@flash} />
-<div class="left-[40rem] fixed inset-y-0 right-0 z-0 hidden lg:block xl:left-[50rem]">
-  <img src={~p"/images/tossbounty_logo.webp"} class="logo animate-spin" />
+<div class="left-[40rem] top-[15rem] fixed inset-y-0 right-0 z-0 hidden lg:block xl:left-[44rem]">
+  <img src={~p"/images/tosslogo.png"} class="logo animate-spin" />
 </div>
 <div class="px-4 py-10 sm:px-6 sm:py-28 lg:px-8 xl:px-28 xl:py-32">
   <div class="mx-auto max-w-xl lg:mx-0">
@@ -21,14 +21,24 @@
     </p>
 
     <div class="mt-10">
-      <a href={~p"/create-bounty"} class="btn btn-primary">
-        Toss a bounty
-      </a>
-
-      <a href={~p"/bounties"} class="btn btn-secondary ml-4">
-        View bounties
-      </a>
+      <%= if @current_user do %>
+          <.link patch={~p"/bounties"} class="text-[1.3rem] text-zinc-900">
+            View bounties
+          </.link>
+      <% else %>
+          <.link
+            href={~p"/users/register"}
+            class="text-[1.3rem] text-zinc-900"
+          >
+            Register
+          </.link>
+          <.link
+            href={~p"/users/log_in"}
+            class="text-[1.3rem] text-zinc-900 ml-10"
+          >
+            Log in
+          </.link>
+      <% end %>
     </div>
-
   </div>
 </div>
