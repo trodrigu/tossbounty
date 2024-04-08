@@ -14,6 +14,7 @@ defmodule Tossbounty.Repo.Migrations.CreateBounties do
       add :integration_status, :string
       add :proof, :string
       add :email, :string
+      add :program_paused, :boolean, default: false
 
       timestamps(type: :utc_datetime)
     end

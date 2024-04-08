@@ -60,10 +60,34 @@ defmodule TossbountyWeb.BountyLive.Index do
   end
 
   @impl true
-  def handle_event("create_bounty", %{"wallet" => _wallet, "org" => org, "description" => description, "amount" => amount, "programId" => program_id, "signature" => signature, "fundingAccount" => funding_account, "bump" => bump}, socket) do
-    bounty=%{"org" => org, "description" => description, "amount" => amount, "program_id" => program_id, "signature" => signature, "funding_account" => funding_account, "bump" => bump, "email" => socket.assigns.current_user.email}
+  def handle_event(
+        "create_bounty",
+        %{
+          "amount" => amount,
+          "bump" => bump,
+          "description" => description,
+          "fundingAccount" => funding_account,
+          "org" => org,
+          "programId" => program_id,
+          "signature" => signature,
+          "wallet" => _wallet,
+        },
+        socket
+      ) do
+    bounty = %{
+      "org" => org,
+      "description" => description,
+      "amount" => amount,
+      "program_id" => program_id,
+      "signature" => signature,
+      "funding_account" => funding_account,
+      "bump" => bump,
+      "email" => socket.assigns.current_user.email
+    }
+
     {:ok, bounty} = Bounties.create_bounty(bounty)
-    #{:noreply, socket}
+    # {:noreply, socket}
     {:noreply, stream_insert(socket, :bounties, bounty)}
   end
+
 end

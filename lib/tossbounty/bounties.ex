@@ -121,4 +121,11 @@ defmodule Tossbounty.Bounties do
   def change_bounty(%Bounty{} = bounty, attrs \\ %{}) do
     Bounty.changeset(bounty, attrs)
   end
+
+  @doc """
+  Get bounty in evaluating claim status using org, description, amount etc...
+  """
+  def get_bounty_in_evaluating_claim_status(org, description, amount, program_id, funding_account, bump) do
+    Repo.one(from(b in Bounty, where: b.org == ^org, where: b.description == ^description, where: b.amount == ^amount, where: b.program_id == ^program_id, where: b.funding_account == ^funding_account, where: b.bump == ^bump, where: b.status == :evaluating_claim))
+  end
 end

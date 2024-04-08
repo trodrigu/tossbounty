@@ -48,10 +48,10 @@ defmodule TossbountyWeb.BountyLive.FormComponent do
         id="bounty-form"
         onsubmit="event.preventDefault()"
       >
-        <.input type="checkbox" field={@form[:pause]} value="1" label="Pause" />
         <.input field={@form[:token_account]} type="text" label="White Hat Token Account" value={assigns.token_account} disabled/>
         <.input field={@form[:program_id]} type="text" label="Program ID" value={assigns.bounty.program_id} disabled/>
         <:actions>
+          <button class="phx-submit-loading:opacity-75 rounded-lg hover:bg-zinc-700 py-2 px-3 text-sm font-semibold leading-6 text-white active:text-white/80 bg-red-700" id="release-bounty-button-with-pause" phx-hook="ReleaseBountyWithPause" disabled>Release Bounty With Pause</button>
           <.button id="release-bounty-button" phx-hook="ReleaseBounty" disabled>Release Bounty</.button>
           <.button id="connect-wallet-release" phx-hook="ConnectWalletRelease">Connect Wallet</.button>
         </:actions>

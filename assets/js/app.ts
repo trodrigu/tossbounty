@@ -29,8 +29,10 @@ import { SolflareWalletAdapter } from "@solana/wallet-adapter-solflare";
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { AnchorProvider, BN, web3, utils, Program } from "@coral-xyz/anchor";
 import { createBountyExample, claimBountyExample } from "./codegen/tossbounty/instructions";
+import { pauseExample } from "./codegen/tossbounty_pauser/instructions";
 import { PROGRAM_ID as TOSSBOUNTY_PROGRAM_ID } from "./codegen/tossbounty/programId";
 import { PROGRAM_ID as EXAMPLE_PROGRAM_ID } from "./codegen/example/programId";
+import { PROGRAM_ID as TOSSBOUNTY_PAUSER_PROGRAM_ID } from "./codegen/tossbounty_pauser/programId";
 import { Bounty } from "./codegen/tossbounty/accounts";
 //import {TOKEN_PROGRAM_ID, Token, AccountLayout} from '@solana/spl-token';
 
@@ -49,15 +51,12 @@ const connection = new Connection(clusterApiUrl("devnet"));
 const csrfToken = document.querySelector("meta[name='csrf-token']")!.getAttribute("content")
 
 const hooks = {
-  ReleaseBounty: {
+  ReleaseBountyWithPause: {
     mounted() {
       this.el.addEventListener("click", async e => {
         const wallet: Adapter | null = solConnect.getWallet();
 
         const provider = new AnchorProvider(connection, (wallet as any), {});
-        const pause = document.getElementById("bounty_pause") as HTMLInputElement;
-        const pauseValue = pause.value;
-        console.log("pauseValue:", pauseValue);
 
         const tokenAccount = document.getElementById("bounty_token_account") as HTMLInputElement;
         const tokenAccountValue = tokenAccount.value;
@@ -68,20 +67,59 @@ const hooks = {
 
         console.log("programIdValue:", programIdValue);
 
-        const [_bountyPda, bump] = web3.PublicKey.findProgramAddressSync([
-          utils.bytes.utf8.encode("bounty"),
-          wallet.publicKey.toBuffer(),
-          new PublicKey(programIdValue).toBuffer(),
-        ], TOSSBOUNTY_PROGRAM_ID)
+        const fundingAccount = new PublicKey("BpaQ5nkQDRJEFSMXFEdhVMizMGoztXZHcuZA7HLmozN1");
 
         const ixns = [
-          claimBountyExampleIx(wallet?.publicKey, provider, new PublicKey(programIdValue), new PublicKey(tokenAccountValue)),
+          claimBountyExampleIx(wallet?.publicKey, provider, new PublicKey(programIdValue), new PublicKey(tokenAccountValue), fundingAccount),
+        ];
+        console.log("ixns:", ixns);
+
+        const pauseIxn = pauseExampleIx(wallet.publicKey, new PublicKey(programIdValue));
+
+        ixns.push(pauseIxn);
+
+        const sig = await simulate(wallet, ixns, []);
+        //const sig = await launch(wallet, ixns, []);
+        console.log("sig:", sig);
+
+
+        const [_bountyPublicKey, bounty] = await readBountyExample(wallet, new PublicKey(programIdValue), fundingAccount);
+        console.log("bounty:", bounty);
+        this.pushEvent("claim_bounty", { org: bounty.org, description: bounty.description, amount: parseInt(bounty.amount), programId: bounty.programId, fundingAccount: bounty.fundingAccount, bump: bounty.bump, paused: true });
+      });
+    }
+  },
+  ReleaseBounty: {
+    mounted() {
+      this.el.addEventListener("click", async e => {
+        const wallet: Adapter | null = solConnect.getWallet();
+
+        const provider = new AnchorProvider(connection, (wallet as any), {});
+
+        const tokenAccount = document.getElementById("bounty_token_account") as HTMLInputElement;
+        const tokenAccountValue = tokenAccount.value;
+        console.log("tokenAccountValue:", tokenAccountValue);
+
+        const programId = document.getElementById("bounty_program_id") as HTMLInputElement;
+        const programIdValue = programId.value;
+
+        console.log("programIdValue:", programIdValue);
+
+        const fundingAccount = new PublicKey("BpaQ5nkQDRJEFSMXFEdhVMizMGoztXZHcuZA7HLmozN1");
+
+        const ixns = [
+          claimBountyExampleIx(wallet?.publicKey, provider, new PublicKey(programIdValue), new PublicKey(tokenAccountValue), fundingAccount),
         ];
         console.log("ixns:", ixns);
 
         const sig = await simulate(wallet, ixns, []);
         //const sig = await launch(wallet, ixns, []);
         console.log("sig:", sig);
+
+
+        const [_bountyPublicKey, bounty] = await readBountyExample(wallet, new PublicKey(programIdValue), fundingAccount);
+        console.log("bounty:", bounty);
+        this.pushEvent("claim_bounty", { org: bounty.org, description: bounty.description, amount: parseInt(bounty.amount), programId: bounty.programId, fundingAccount: bounty.fundingAccount, bump: bounty.bump, paused: null });
       });
     }
   },
@@ -103,22 +141,25 @@ const hooks = {
         const programId = document.getElementById("bounty_program_id") as HTMLInputElement;
         const programIdValue = programId.value;
 
+        const fundingAccount = new PublicKey("BpaQ5nkQDRJEFSMXFEdhVMizMGoztXZHcuZA7HLmozN1");
+
         const [_bountyPda, bump] = web3.PublicKey.findProgramAddressSync([
           utils.bytes.utf8.encode("bounty"),
           wallet.publicKey.toBuffer(),
           new PublicKey(programIdValue).toBuffer(),
+          fundingAccount.toBuffer(),
         ], TOSSBOUNTY_PROGRAM_ID)
 
         const ixns = [
-          createBountyExampleIx(wallet?.publicKey, provider, descriptionValue, orgValue, new BN(parseInt(amountValue)), new PublicKey(programIdValue)),
+          createBountyExampleIx(wallet?.publicKey, provider, descriptionValue, orgValue, new BN(parseInt(amountValue)), new PublicKey(programIdValue), fundingAccount),
         ];
 
         //const sig = await simulate(wallet, ixns, []);
-        const sig = await launch(wallet, ixns, []);
-        console.log("sig:", sig);
+        //const sig = await launch(wallet, ixns, []);
+        //console.log("sig:", sig);
+        const sig = "uKCivg9jEfJXUdrrK355Lt4BFujrwm8ogDvxtr1vNZCnaqA5XvSJhjyVf2JPtPZ9gSbcn1tNRnesAtRu8sLqg9D";
 
-        const publicKey = new PublicKey("2ZwHc9yNYbeMuRQ6bVhGAofePxUu2hCow5sVogziRex6");
-        this.pushEvent("create_bounty", { wallet: wallet ? wallet.publicKey.toString() : null, org: orgValue, description: descriptionValue, amount: amountValue, programId: programIdValue, signature: sig, fundingAccount: publicKey.toString(), bump: bump });
+        this.pushEvent("create_bounty", { wallet: wallet ? wallet.publicKey.toString() : null, org: orgValue, description: descriptionValue, amount: amountValue, programId: programIdValue, signature: sig, fundingAccount: fundingAccount.toString(), bump: bump });
       });
     }
   },
@@ -153,8 +194,15 @@ const hooks = {
         solConnect.onWalletChange((adapter: Adapter | null) => {
           console.log("wallet change:", adapter);
 
-          const newBountyButton = document.getElementById("release-bounty-button") as HTMLButtonElement;
-          newBountyButton.removeAttribute("disabled");
+          const releaseBountyButton = document.getElementById("release-bounty-button") as HTMLButtonElement;
+          if (releaseBountyButton !== null) {
+            releaseBountyButton.removeAttribute("disabled");
+          }
+
+          const releaseBountyWithPauseButton = document.getElementById("release-bounty-button-with-pause") as HTMLButtonElement;
+          if (releaseBountyWithPauseButton !== null) {
+            releaseBountyWithPauseButton.removeAttribute("disabled");
+          }
 
           adapter
             ? console.log("connected:", adapter.name, adapter.publicKey.toString())
@@ -225,31 +273,45 @@ async function launch(
   }
 }
 
-const createBountyExampleIx = (wallet: PublicKey, provider: AnchorProvider, description: string, org: string, bountyRewardAmount: BN, programId: PublicKey) => {
+const createBountyExampleIx = (wallet: PublicKey, provider: AnchorProvider, description: string, org: string, bountyRewardAmount: BN, programId: PublicKey, fundingAccount: PublicKey) => {
   const [bountyPda, bump] = web3.PublicKey.findProgramAddressSync([
     utils.bytes.utf8.encode("bounty"),
     wallet.toBuffer(),
     programId.toBuffer(),
+    fundingAccount.toBuffer(),
   ], TOSSBOUNTY_PROGRAM_ID)
 
-  const publicKey = new PublicKey("2ZwHc9yNYbeMuRQ6bVhGAofePxUu2hCow5sVogziRex6");
+  //const publicKey = new PublicKey("2ZwHc9yNYbeMuRQ6bVhGAofePxUu2hCow5sVogziRex6");
+  //const publicKey = new PublicKey("BpaQ5nkQDRJEFSMXFEdhVMizMGoztXZHcuZA7HLmozN1");
 
-  return createBountyExample({ description: description, org: org, amount: bountyRewardAmount, bump: bump }, { authority: wallet, bounty: bountyPda, fundingAccount: publicKey, systemProgram: SystemProgram.programId, programId: programId }, TOSSBOUNTY_PROGRAM_ID);
+  return createBountyExample({ description: description, org: org, amount: bountyRewardAmount, bump: bump }, { authority: wallet, bounty: bountyPda, fundingAccount: fundingAccount, systemProgram: SystemProgram.programId, programId: programId }, TOSSBOUNTY_PROGRAM_ID);
 };
 
-const claimBountyExampleIx = (wallet: PublicKey, provider: AnchorProvider, programId: PublicKey, whitehatTokenAccount: PublicKey) => {
+const claimBountyExampleIx = (wallet: PublicKey, provider: AnchorProvider, programId: PublicKey, whitehatTokenAccount: PublicKey, fundingAccount: PublicKey) => {
   const [bountyPda, bump] = web3.PublicKey.findProgramAddressSync([
     utils.bytes.utf8.encode("bounty"),
     wallet.toBuffer(),
     programId.toBuffer(),
+    fundingAccount.toBuffer(),
   ], TOSSBOUNTY_PROGRAM_ID)
 
   console.log("bountyPda:", bountyPda);
   console.log("programId:", programId);
-  const publicKey = new PublicKey("2ZwHc9yNYbeMuRQ6bVhGAofePxUu2hCow5sVogziRex6");
+  //const publicKey = new PublicKey("2ZwHc9yNYbeMuRQ6bVhGAofePxUu2hCow5sVogziRex6");
+  //const publicKey = new PublicKey("BpaQ5nkQDRJEFSMXFEdhVMizMGoztXZHcuZA7HLmozN1");
 
-  return claimBountyExample({ authority: wallet, whitehatTokenAccount: whitehatTokenAccount, fundingAccount: publicKey, bounty: bountyPda, tokenProgram: TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId, programId: programId }, TOSSBOUNTY_PROGRAM_ID);
+  return claimBountyExample({ authority: wallet, whitehatTokenAccount: whitehatTokenAccount, fundingAccount: fundingAccount, bounty: bountyPda, tokenProgram: TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId, programId: programId }, TOSSBOUNTY_PROGRAM_ID);
 };
+
+const pauseExampleIx = (wallet: Pubkey, programId: PublicKey) => {
+  const [statePda, _bump] = web3.PublicKey.findProgramAddressSync([
+    utils.bytes.utf8.encode("pause"),
+    wallet.toBuffer(),
+  ], programId);
+
+  return pauseExample({ authority: wallet, state: statePda, programId: programId, systemProgram: SystemProgram.programId }, TOSSBOUNTY_PAUSER_PROGRAM_ID);
+};
+
 
 
 declare global {
@@ -263,17 +325,18 @@ let liveSocket = new LiveSocket("/live", Socket, {
   params: { _csrf_token: csrfToken }
 })
 
-function findBountyExample(wallet: Adapter): PublicKey {
+function findBountyExample(wallet: Adapter, programId: PublicKey, fundingAccount: PublicKey): PublicKey {
   const [bountyPda, bump] = web3.PublicKey.findProgramAddressSync([
     utils.bytes.utf8.encode("bounty"),
     wallet.publicKey.toBuffer(),
-    EXAMPLE_PROGRAM_ID.toBuffer(),
+    programId.toBuffer(),
+    fundingAccount.toBuffer(),
   ], TOSSBOUNTY_PROGRAM_ID)
   return bountyPda;
 }
 
-async function readBountyExample(wallet: Adapter): Promise<[PublicKey, Bounty | null]> {
-  const bounty = findBountyExample(wallet);
+async function readBountyExample(wallet: Adapter, programId: PublicKey, fundingAccount: PublicKey): Promise<[PublicKey, Bounty | null]> {
+  const bounty = findBountyExample(wallet, programId, fundingAccount);
   return [bounty, await Bounty.fetch(connection, bounty, TOSSBOUNTY_PROGRAM_ID)];
 }
 
