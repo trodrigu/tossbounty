@@ -1,0 +1,35 @@
+{
+  "version": "0.1.0",
+  "name": "tossbounty_pauser",
+  "instructions": [
+    {
+      "name": "pauseExample",
+      "accounts": [
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "state",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "programId",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    }
+  ],
+  "metadata": {
+    "address": "9AUryp328sF7BKnv63arhPvrqHNqmwpQEvm7ry6oEnHh"
+  }
+}

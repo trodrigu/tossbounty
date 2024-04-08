@@ -8,7 +8,7 @@ defmodule Tossbounty.BountiesTest do
 
     import Tossbounty.BountiesFixtures
 
-    @invalid_attrs %{status: nil, description: nil, org: nil, amount: nil, funding_account: nil, bump: nil, example_program_id: nil}
+    @invalid_attrs %{status: nil, description: nil, org: nil, amount: nil, funding_account: nil, bump: nil, program_id: nil}
 
     test "list_bounties/0 returns all bounties" do
       bounty = bounty_fixture()
@@ -21,7 +21,7 @@ defmodule Tossbounty.BountiesTest do
     end
 
     test "create_bounty/1 with valid data creates a bounty" do
-      valid_attrs = %{status: "some status", description: "some description", org: "some org", amount: 42, funding_account: "some funding_account", bump: 42, example_program_id: "some example_program_id"}
+      valid_attrs = %{status: "some status", description: "some description", org: "some org", amount: 42, funding_account: "some funding_account", bump: 42, program_id: "some program_id"}
 
       assert {:ok, %Bounty{} = bounty} = Bounties.create_bounty(valid_attrs)
       assert bounty.status == "some status"
@@ -30,7 +30,7 @@ defmodule Tossbounty.BountiesTest do
       assert bounty.amount == 42
       assert bounty.funding_account == "some funding_account"
       assert bounty.bump == 42
-      assert bounty.example_program_id == "some example_program_id"
+      assert bounty.program_id == "some program_id"
     end
 
     test "create_bounty/1 with invalid data returns error changeset" do
@@ -39,7 +39,7 @@ defmodule Tossbounty.BountiesTest do
 
     test "update_bounty/2 with valid data updates the bounty" do
       bounty = bounty_fixture()
-      update_attrs = %{status: "some updated status", description: "some updated description", org: "some updated org", amount: 43, funding_account: "some updated funding_account", bump: 43, example_program_id: "some updated example_program_id"}
+      update_attrs = %{status: "some updated status", description: "some updated description", org: "some updated org", amount: 43, funding_account: "some updated funding_account", bump: 43, program_id: "some updated program_id"}
 
       assert {:ok, %Bounty{} = bounty} = Bounties.update_bounty(bounty, update_attrs)
       assert bounty.status == "some updated status"
@@ -48,7 +48,7 @@ defmodule Tossbounty.BountiesTest do
       assert bounty.amount == 43
       assert bounty.funding_account == "some updated funding_account"
       assert bounty.bump == 43
-      assert bounty.example_program_id == "some updated example_program_id"
+      assert bounty.program_id == "some updated program_id"
     end
 
     test "update_bounty/2 with invalid data returns error changeset" do

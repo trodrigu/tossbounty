@@ -3,13 +3,15 @@ defmodule Tossbounty.Bounties.Bounty do
   import Ecto.Changeset
 
   schema "bounties" do
-    field :status, :string
+    field :status, Ecto.Enum, values: [:unclaimed, :claimed, :canceled], default: :unclaimed
     field :description, :string
     field :org, :string
     field :amount, :integer
     field :funding_account, :string
     field :bump, :integer
-    field :example_program_id, :string
+    field :program_id, :string
+    field :signature, :string
+    field :integration_status, Ecto.Enum, values: [:pending, :approved, :rejected], default: :pending
 
     timestamps(type: :utc_datetime)
   end
@@ -17,7 +19,7 @@ defmodule Tossbounty.Bounties.Bounty do
   @doc false
   def changeset(bounty, attrs) do
     bounty
-    |> cast(attrs, [:description, :org, :amount, :status, :funding_account, :bump, :example_program_id])
-    |> validate_required([:description, :org, :amount, :status, :funding_account, :bump, :example_program_id])
+    |> cast(attrs, [:description, :org, :amount, :status, :funding_account, :bump, :program_id, :signature])
+    |> validate_required([:description, :org, :amount, :status, :funding_account, :bump, :program_id, :signature])
   end
 end

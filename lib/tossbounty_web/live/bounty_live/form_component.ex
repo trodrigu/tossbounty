@@ -15,8 +15,7 @@ defmodule TossbountyWeb.BountyLive.FormComponent do
         <.input field={@form[:description]} type="text" label="Description" />
         <.input field={@form[:org]} type="text" label="Org" />
         <.input field={@form[:amount]} type="number" label="Amount" />
-        <.input field={@form[:funding_account]} type="text" label="Funding account" />
-        <.input field={@form[:example_program_id]} type="text" label="Example program" />
+        <.input field={@form[:program_id]} type="text" label="Program ID" />
         <:actions>
           <.button id="save-bounty-button" phx-hook="SimulateTransaction">Save Bounty</.button>
         </:actions>

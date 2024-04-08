@@ -9,7 +9,9 @@ defmodule Tossbounty.Repo.Migrations.CreateBounties do
       add :status, :string
       add :funding_account, :string
       add :bump, :integer
-      add :example_program_id, :string
+      add :program_id, :string
+      add :signature, :string
+      add :integration_status, :string
 
       timestamps(type: :utc_datetime)
     end

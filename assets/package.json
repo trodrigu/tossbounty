@@ -1,6 +1,19 @@
 {
+  "scripts": {
+    "codegen": "anchor-client-gen ./idl/tossbounty.json ./codegen"
+  },
   "dependencies": {
     "@coral-xyz/anchor": "^0.29.0",
-    "@solana/wallet-adapter-solflare": "^0.6.28"
+    "@coral-xyz/borsh": "^0.29.0",
+    "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
+    "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
+    "@solana/spl-token": "^0.4.3",
+    "@solana/wallet-adapter-solflare": "^0.6.28",
+    "bn.js": "^5.2.1",
+    "buffer": "^6.0.3",
+    "esbuild": "^0.20.2",
+    "phoenix": "file:../deps/phoenix",
+    "phoenix_html": "file:../deps/phoenix_html",
+    "phoenix_live_view": "file:../deps/phoenix_live_view"
   }
 }

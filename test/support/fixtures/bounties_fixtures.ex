@@ -14,7 +14,7 @@ defmodule Tossbounty.BountiesFixtures do
         amount: 42,
         bump: 42,
         description: "some description",
-        example_program_id: "some example_program_id",
+        program_id: "some program_id",
         funding_account: "some funding_account",
         org: "some org",
         status: "some status"

@@ -22,15 +22,16 @@ import { Socket } from "phoenix"
 import { LiveSocket } from "phoenix_live_view"
 import type { ViewHook } from "phoenix_live_view"
 import topbar from "../vendor/topbar"
-import { Connection, TransactionMessage, TransactionInstruction, ComputeBudgetProgram, Keypair, VersionedTransaction, clusterApiUrl, } from "@solana/web3.js";
+import { Connection, TransactionMessage, TransactionInstruction, ComputeBudgetProgram, Keypair, VersionedTransaction, clusterApiUrl, PublicKey, SystemProgram, AccountMeta } from "@solana/web3.js";
 import { SolanaConnect } from "solana-connect";
 import { Adapter } from "@solana/wallet-adapter-base";
 import { SolflareWalletAdapter } from "@solana/wallet-adapter-solflare";
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { AnchorProvider, BN, web3, utils, Program } from "@coral-xyz/anchor";
-import { IDL } from "./tossbounty";
-import { IDL as ExampleIDL } from "./example";
-//import * as splToken from "@solana/spl-token";
+import { createBountyExample } from "./codegen/tossbounty/instructions";
+import { PROGRAM_ID as TOSSBOUNTY_PROGRAM_ID } from "./codegen/tossbounty/programId";
+import { PROGRAM_ID as EXAMPLE_PROGRAM_ID } from "./codegen/example/programId";
+import { Bounty } from "./codegen/tossbounty/accounts";
 
 const solConnect = new SolanaConnect({
   additionalAdapters: [
@@ -41,64 +42,56 @@ const solConnect = new SolanaConnect({
 });
 
 const connection = new Connection(clusterApiUrl("devnet"));
-console.log("connection:", connection)
 
 const csrfToken = document.querySelector("meta[name='csrf-token']")!.getAttribute("content")
 
 const hooks = {
+  ListBounties: {
+    updated() {
+      const wallet: Adapter | null = solConnect.getWallet();
+      console.log("wallet:", wallet);
+      if (wallet !== null && wallet !== undefined) {
+        console.log("hmm");
+        const [bountyPublicKey, bounty] = readBountyExample(wallet);
+        console.log("bounty:", bounty.description);
+        this.pushEvent("list_bounties", { bounties: [bounty] });
+      }
+    }
+  },
   SimulateTransaction: {
     mounted() {
-      this.el.addEventListener("click", e => {
-        console.log("solConnect:", solConnect);
+      this.el.addEventListener("click", async e => {
         const wallet: Adapter | null = solConnect.getWallet();
-        console.log("wallet:", wallet.publicKey.toBuffer());
 
         const provider = new AnchorProvider(connection, (wallet as any), {});
-        console.log("provider:", provider);
+        const description = document.getElementById("bounty_description") as HTMLInputElement;
+        const descriptionValue = description.value;
 
-        //const program = workspace.Tossbounty as Program<Tossbounty>;
-        const program = new Program(IDL, "BYzWEaZXS7Zf4SY6dcqnsjySp9qLEmB9C3WvyigxtpYQ", provider);
-        console.log("program:", program);
-        //console.log("program:", program);
-        //const example = workspace.Example as Program<Example>;
-        const example = new Program(ExampleIDL, "BYzWEaZXS7Zf4SY6dcqnsjySp9qLEmB9C3WvyigxtpYR", provider);
-        const [bountyPda, bump] = web3.PublicKey.findProgramAddressSync([
+        const org = document.getElementById("bounty_org") as HTMLInputElement;
+        const orgValue = org.value;
+
+        const amount = document.getElementById("bounty_amount") as HTMLInputElement;
+        const amountValue = amount.value;
+
+        const programId = document.getElementById("bounty_program_id") as HTMLInputElement;
+        const programIdValue = programId.value;
+
+        const [_bountyPda, bump] = web3.PublicKey.findProgramAddressSync([
           utils.bytes.utf8.encode("bounty"),
           wallet.publicKey.toBuffer(),
-          example.programId.toBuffer()
-        ], program.programId)
+          new PublicKey(programIdValue).toBuffer(),
+        ], TOSSBOUNTY_PROGRAM_ID)
 
-        console.log("bountyPda:", bountyPda);
+        const ixns = [
+          createBountyExampleIx(wallet?.publicKey, provider, descriptionValue, orgValue, new BN(parseInt(amountValue)), new PublicKey(programIdValue)),
+        ];
 
-        const description = "Fix a bug in our app";
-        const org = "coral-xyz";
-        const bountyRewardAmount = new BN(10000);
+        const sig = await simulate(wallet, ixns, []);
+        //const sig = await launch(wallet, ixns, []);
+        console.log("sig:", sig);
 
-        // TODO: deal with funding account?
-        //const mintPubkey = await splToken.createMint(
-          //provider.connection,
-          //payer,
-          //provider.wallet.publicKey,
-          //provider.wallet.publicKey,
-          //6,
-        //);
-        //const fundingAccount = await splToken.createAccount(
-          //provider.connection,
-          //payer,
-          //mintPubkey, 
-          //payer.publicKey, 
-        //);
-        // TODO: create associated token funding account offline
-        const fundingAccount = wallet.publicKey;
-
-
-        const ix = program.methods.createBountyExample(description, org, bountyRewardAmount, bump).accounts({
-          bounty: bountyPda,
-          fundingAccount: fundingAccount, 
-          programId: example.programId,
-        });
-
-        ix.rpc();
+        const publicKey = new PublicKey("2ZwHc9yNYbeMuRQ6bVhGAofePxUu2hCow5sVogziRex6");
+        this.pushEvent("create_bounty", { wallet: wallet ? wallet.publicKey.toString() : null, org: orgValue, description: descriptionValue, amount: amountValue, programId: programIdValue, signature: sig, fundingAccount: publicKey.toString(), bump: bump });
       });
     }
   },
@@ -128,9 +121,7 @@ async function simulate(
   ixs: TransactionInstruction[],
   signers?: Keypair[]
 ) {
-  console.log("connection simulate:", connection);
   const latestBlockHash = await connection.getLatestBlockhash();
-  console.log("latestBlockHash:", latestBlockHash);
   const message = new TransactionMessage({
     payerKey: wallet.publicKey!,
     recentBlockhash: latestBlockHash.blockhash,
@@ -151,6 +142,45 @@ async function simulate(
   return "succeed";
 }
 
+async function launch(
+  wallet: Adapter,
+  ixs: TransactionInstruction[],
+  signers?: Keypair[]
+) {
+  const latestBlockHash = await connection.getLatestBlockhash();
+  const message = new TransactionMessage({
+    payerKey: wallet.publicKey!,
+    recentBlockhash: latestBlockHash.blockhash,
+    instructions: [
+      ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }),
+    ].concat(ixs),
+  }).compileToV0Message();
+  const tx = new VersionedTransaction(message);
+
+  console.log("signers:", signers);
+  try {
+    const res = await wallet.sendTransaction(tx, connection, { signers });
+    console.log("res:", res);
+    return res;
+  } catch (err) {
+    console.error("Error sending transaction:", err);
+
+    return;
+  }
+}
+
+const createBountyExampleIx = (wallet: PublicKey, provider: AnchorProvider, description: string, org: string, bountyRewardAmount: BN, programId: PublicKey) => {
+  const [bountyPda, bump] = web3.PublicKey.findProgramAddressSync([
+    utils.bytes.utf8.encode("bounty"),
+    wallet.toBuffer(),
+    programId.toBuffer(),
+  ], TOSSBOUNTY_PROGRAM_ID)
+
+  const publicKey = new PublicKey("2ZwHc9yNYbeMuRQ6bVhGAofePxUu2hCow5sVogziRex6");
+
+  return createBountyExample({ description: description, org: org, amount: bountyRewardAmount, bump: bump }, { authority: wallet, bounty: bountyPda, fundingAccount: publicKey, systemProgram: SystemProgram.programId, programId: programId }, TOSSBOUNTY_PROGRAM_ID);
+};
+
 declare global {
   interface Window {
     liveSocket: LiveSocket
@@ -161,6 +191,20 @@ let liveSocket = new LiveSocket("/live", Socket, {
   hooks,
   params: { _csrf_token: csrfToken }
 })
+
+function findBountyExample(wallet: Adapter): PublicKey {
+  const [bountyPda, bump] = web3.PublicKey.findProgramAddressSync([
+    utils.bytes.utf8.encode("bounty"),
+    wallet.publicKey.toBuffer(),
+    EXAMPLE_PROGRAM_ID.toBuffer(),
+  ], TOSSBOUNTY_PROGRAM_ID)
+  return bountyPda;
+}
+
+async function readBountyExample(wallet: Adapter): Promise<[PublicKey, Bounty | null]> {
+  const bounty = findBountyExample(wallet);
+  return [bounty, await Bounty.fetch(connection, bounty, TOSSBOUNTY_PROGRAM_ID)];
+}
 
 // Show progress bar on live navigation and form submits
 topbar.config({ barColors: { 0: "#29d" }, shadowColor: "rgba(0, 0, 0, .3)" })

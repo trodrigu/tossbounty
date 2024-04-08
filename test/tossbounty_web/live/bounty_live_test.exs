@@ -4,9 +4,9 @@ defmodule TossbountyWeb.BountyLiveTest do
   import Phoenix.LiveViewTest
   import Tossbounty.BountiesFixtures
 
-  @create_attrs %{status: "some status", description: "some description", org: "some org", amount: 42, funding_account: "some funding_account", bump: 42, example_program_id: "some example_program_id"}
-  @update_attrs %{status: "some updated status", description: "some updated description", org: "some updated org", amount: 43, funding_account: "some updated funding_account", bump: 43, example_program_id: "some updated example_program_id"}
-  @invalid_attrs %{status: nil, description: nil, org: nil, amount: nil, funding_account: nil, bump: nil, example_program_id: nil}
+  @create_attrs %{status: "some status", description: "some description", org: "some org", amount: 42, funding_account: "some funding_account", bump: 42, program_id: "some example_program_id"}
+  @update_attrs %{status: "some updated status", description: "some updated description", org: "some updated org", amount: 43, funding_account: "some updated funding_account", bump: 43, program_id: "some updated example_program_id"}
+  @invalid_attrs %{status: nil, description: nil, org: nil, amount: nil, funding_account: nil, bump: nil, program_id: nil}
 
   defp create_bounty(_) do
     bounty = bounty_fixture()

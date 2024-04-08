@@ -18,20 +18,12 @@
   <:col :let={{_id, bounty}} label="Amount"><%= bounty.amount %></:col>
   <:col :let={{_id, bounty}} label="Status"><%= bounty.status %></:col>
   <:col :let={{_id, bounty}} label="Funding account"><%= bounty.funding_account %></:col>
-  <:col :let={{_id, bounty}} label="Example program"><%= bounty.example_program_id %></:col>
+  <:col :let={{_id, bounty}} label="Program ID"><%= bounty.program_id %></:col>
   <:action :let={{_id, bounty}}>
     <div class="sr-only">
       <.link navigate={~p"/bounties/#{bounty}"}>Show</.link>
     </div>
     <.link patch={~p"/bounties/#{bounty}/edit"}>Edit</.link>
-  </:action>
-  <:action :let={{id, bounty}}>
-    <.link
-      phx-click={JS.push("delete", value: %{id: bounty.id}) |> hide("##{id}")}
-      data-confirm="Are you sure?"
-    >
-      Delete
-    </.link>
   </:action>
 </.table>
 
@@ -45,3 +37,4 @@
     patch={~p"/bounties"}
   />
 </.modal>
+<div id="list-bounties" phx-hook="ListBounties" hidden></div>
