@@ -55,7 +55,6 @@ defmodule TossbountyWeb.BountyLive.Index do
 
   @impl true
   def handle_event("wallet_change", %{"wallet" => wallet_public_key}, socket) do
-    IO.inspect(wallet_public_key)
     {:noreply, socket}
   end
 
@@ -85,9 +84,9 @@ defmodule TossbountyWeb.BountyLive.Index do
       "email" => socket.assigns.current_user.email
     }
 
-    {:ok, bounty} = Bounties.create_bounty(bounty)
-    # {:noreply, socket}
-    {:noreply, stream_insert(socket, :bounties, bounty)}
+    {:ok, _bounty} = Bounties.create_bounty(bounty)
+
+    {:noreply, push_navigate(socket, to: ~p"/bounties")}
   end
 
 end

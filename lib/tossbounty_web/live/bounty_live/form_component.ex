@@ -8,7 +8,6 @@ defmodule TossbountyWeb.BountyLive.FormComponent do
 
   @impl true
   def render(assigns) do
-    IO.inspect(assigns)
     ~H"""
     <div>
       <.simple_form
@@ -21,8 +20,9 @@ defmodule TossbountyWeb.BountyLive.FormComponent do
         <.input field={@form[:org]} type="text" label="Org" />
         <.input field={@form[:amount]} type="number" label="Amount" />
         <.input field={@form[:program_id]} type="text" label="Program ID" />
+        <.input field={@form[:funding_account]} type="text" label="Funding Account" />
         <:actions>
-          <.button id="save-bounty-button" phx-hook="SimulateTransaction">Save Bounty</.button>
+          <.button id="save-bounty-button" phx-hook="CreateBounty">Save Bounty</.button>
         </:actions>
       </.simple_form>
 
@@ -50,6 +50,7 @@ defmodule TossbountyWeb.BountyLive.FormComponent do
       >
         <.input field={@form[:token_account]} type="text" label="White Hat Token Account" value={assigns.token_account} disabled/>
         <.input field={@form[:program_id]} type="text" label="Program ID" value={assigns.bounty.program_id} disabled/>
+        <.input field={@form[:funding_account]} type="text" label="Funding Account" disabled/>
         <:actions>
           <button class="phx-submit-loading:opacity-75 rounded-lg hover:bg-zinc-700 py-2 px-3 text-sm font-semibold leading-6 text-white active:text-white/80 bg-red-700" id="release-bounty-button-with-pause" phx-hook="ReleaseBountyWithPause" disabled>Release Bounty With Pause</button>
           <.button id="release-bounty-button" phx-hook="ReleaseBounty" disabled>Release Bounty</.button>
