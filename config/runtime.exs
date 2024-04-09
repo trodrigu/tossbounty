@@ -21,6 +21,11 @@ if System.get_env("PHX_SERVER") do
 end
 
 if config_env() == :prod do
+  config :tossbounty, Tossbounty.Mailer,
+    adapter: Swoosh.Adapters.Mailgun,
+    api_key: System.get_env("MAILGUN_API_KEY"),
+    domain: "tossbounty.com"
+
   # Sqlite3 configuration
   config :exqlite, default_chunk_size: 100
 
